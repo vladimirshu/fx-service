@@ -1,0 +1,47 @@
+@startuml
+!include <C4/C4_Component>
+
+title EUR-FX Exchange Rate Service - Component Diagram
+
+Person(apiClient, "API Client", "Consumer of the exchange-rate API")
+Person(opsUser, "Operator / Platform", "Checks service health and readiness")
+
+System_Ext(bundesbank, "Deutsche Bundesbank Public Service", "Public source of EUR-FX exchange-rate data")
+
+Container_Boundary(app, "Spring Boot Application") {
+    Component(controller, "Exchange Rate Controller", "Spring MVC REST Controller", "Exposes endpoints for currencies, rates and EUR conversion")
+
+    Component(service, "Exchange Rate Service", "Spring Service", "Coordinates use cases and business rules")
+
+    Component(conversionService, "Currency Conversion Service", "Spring Service", "Converts foreign currency amounts to EUR using BigDecimal")
+
+    Component(importer, "Exchange Rate Importer", "Spring Component", "Imports historical and daily EUR-FX rates")
+
+    Component(scheduler, "Exchange Rate Import Job", "Spring Component", "Triggers initial & regular daily exchange-rate updates")
+
+    Component(client, "Bundesbank Client", "HTTP Client", "Retrieves exchange-rate data from Deutsche Bundesbank")
+
+    Component(repository, "Exchange Rate Repository", "Spring Data JPA Repository", "Provides fast lookup by currency and date")
+
+    Component(healthIndicator, "Exchange Rate Data Health Indicator", "Spring Boot Actuator HealthIndicator", "Reports readiness based on availability of imported exchange-rate data")
+}
+
+ContainerDb(h2, "H2 Database", "In-memory SQL database", "Stores imported exchange rates for fast local reads")
+
+Rel(apiClient, controller, "Uses", "HTTP/JSON")
+
+Rel(opsUser, healthIndicator, "Checks readiness via", "/actuator/health/readiness")
+
+Rel(controller, service, "Calls")
+Rel(service, conversionService, "Uses for conversion")
+Rel(service, repository, "Reads rates from")
+
+Rel(scheduler, importer, "Triggers daily import via cron")
+Rel(importer, client, "Fetches data via")
+Rel(client, bundesbank, "Requests exchange-rate data", "HTTP")
+Rel(importer, repository, "Stores imported rates in")
+Rel(repository, h2, "Reads/writes")
+
+Rel(healthIndicator, repository, "Checks whether exchange-rate data exists")
+
+@enduml
