@@ -27,4 +27,11 @@ class ExchangeRateImportJobTest {
 
         verify(exchangeRateImporter).importExchangeRates();
     }
+
+    @Test
+    void updateExchangeRatesDailyDelegatesToImporter() {
+        exchangeRateImportJob.updateExchangeRatesDaily();
+
+        verify(exchangeRateImporter).updateExchangeRates();
+    }
 }

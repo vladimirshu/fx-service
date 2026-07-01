@@ -26,7 +26,7 @@ Please reference C4 components model diagram (.puml) description for the archite
 for that:
 create exchange rate import job with one method that starts import of the currency exchange data and is executed on application startup. The method must invoke the ExchangeRateImporter class method that mocks response with 2 sample currencies (later it will call BundesbankClient to get real data). For now, skip any logic for the exchange rate entity.
 
-## get currency list from Bundesbank
+## Getting currency list from Bundesbank
 let's implement an API call to the Bundesbank and parse the response so it can be used by application logic
 
 for that:
@@ -37,3 +37,10 @@ for that:
   Please extract list of the currencies from the response.
 - create ImportedCurrency java record and map bundesbank API response to it.
 - update ExchangeRateImporter so it uses BundesbankRestClient instead of the sample data
+
+## Daily update of currency exchange data
+Let's implement daily update of the currency exchange data
+
+for that:
+1. Add another method to the ExchangeRateImportJob that updates currency exchange data and is scheduled to be executed daily, at 12 am.
+2. Add another method to the ExchangeRateImporter that will implement the currency exchange data update logic. For that use existing logic to get a list of all currencies from the BundesbankRestClient. Then compare the result with the currencies available in the database. Find delta and update the DB: If there are new currencies available via API, please add them to the database. If some currencies were removed, please also remove them from the database.

@@ -46,4 +46,26 @@ class ExchangeRateImporterTest {
             return true;
         }));
     }
+
+    @Test
+    void updateExchangeRatesAddsNewCurrenciesAndRemovesUnavailableCurrencies() {
+        when(bundesbankRestClient.getCurrencies()).thenReturn(List.of(
+                new ImportedCurrency("CHF", "Swiss franc"),
+                new ImportedCurrency("JPY", "Japanese yen"),
+                new ImportedCurrency("USD", "US dollar")
+        ));
+        when(currencyRepository.findAll()).thenReturn(List.of(
+                new Currency("CAD", "Canadian dollar"),
+                new Currency("CHF", "Swiss franc")
+        ));
+
+        exchangeRateImporter.updateExchangeRates();
+
+        verify(currencyRepository).saveAll(argThat(currencies -> {
+            assertThat(currencies).extracting(Currency::getCode, Currency::getName)
+                    .containsExactly(tuple("JPY", "Japanese yen"), tuple("USD", "US dollar"));
+            return true;
+        }));
+        verify(currencyRepository).deleteAllById(List.of("CAD"));
+    }
 }
