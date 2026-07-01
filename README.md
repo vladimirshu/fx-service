@@ -81,7 +81,7 @@ Response example:
   {
     "currency": "USD",
     "date": "30-06-2026",
-    "rate": 0,9563
+    "rate": 0.9563
   }
 ]
 ```
@@ -95,7 +95,7 @@ GET /api/v1/rate?currency=USD&date=30-06-2026
 Response example:
 
 ```json
-"1,0956"
+1.0956
 ```
 
 Unsupported query combinations:
@@ -112,7 +112,7 @@ GET /api/v1/convert?currency=USD&date=30-06-2026&amount=100
 Response example:
 
 ```json
-"94,24"
+94.24
 ```
 
 ## How To Run

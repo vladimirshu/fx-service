@@ -89,3 +89,13 @@ Let's implement the following use case:
 for that:
 - great corresponding service method
 - create controller endpoint based on the API definition in the readme file
+
+## Readiness check
+Let's implement asynchronous execution of the initial data import and make entire service not ready until import is done.
+
+for that:
+- make `ExchangeRateImportJob#startInitialImport()` executed asynchronously.
+- Configure Spring Boot Actuator with the following endpoints:
+  /actuator/health/liveness -- Must include default actuator checks.
+  /actuator/health/readiness -- Must include custom HealthIndicator that will check the state of the imported exchange rates in the database. Application is treated ready when both Currency and ExchangeRate DB entities are present in the DB (Tables are not empty)
+- please also do not run import if both currency and exchange rate tables are not empty
