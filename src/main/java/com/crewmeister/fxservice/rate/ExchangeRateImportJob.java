@@ -16,7 +16,7 @@ public class ExchangeRateImportJob {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startInitialImport() {
-        exchangeRateImporter.importExchangeRates();
+        exchangeRateImporter.importExchangeRatesAndCurrencies();
     }
 
     @Scheduled(cron = "0 0 0 * * *")

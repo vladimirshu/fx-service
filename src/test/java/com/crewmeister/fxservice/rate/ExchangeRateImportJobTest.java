@@ -25,7 +25,7 @@ class ExchangeRateImportJobTest {
     void startInitialImportDelegatesToImporter() {
         exchangeRateImportJob.startInitialImport();
 
-        verify(exchangeRateImporter).importExchangeRates();
+        verify(exchangeRateImporter).importExchangeRatesAndCurrencies();
     }
 
     @Test

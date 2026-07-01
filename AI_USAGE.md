@@ -54,3 +54,13 @@ For that:
 - create relevant service method; DTO and mapper classes the same way they exist for the currency.
 - create controller endpoint based on the definition in the readme file
 - create test classes for the service and controller logic
+
+## Getting exchange rate list from Bundesbank
+let's implement exchange rate retrieval from the Bundesbank
+
+for that:
+- update ExchangeRateImporter: Right after currencies are imported, exchange rates must be imported.
+  Here is an API endpoint: https://api.statistiken.bundesbank.de/rest/data/BBEX3/D.USD.EUR.BB.AC.000?format=sdmx_json&detail=dataonly
+  Substitute hard-coded 'USD' currency in the URL with the all currencies retrieved from the previous get all currencies API call
+  Sample API call JSON response with the expected structure is attached.
+- create ImportedExchangeRate java record and use it the same way as for the currency logic.

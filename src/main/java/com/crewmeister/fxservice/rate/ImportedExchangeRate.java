@@ -1,0 +1,7 @@
+package com.crewmeister.fxservice.rate;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+public record ImportedExchangeRate(String currencyCode, LocalDate date, BigDecimal rate) {
+}
