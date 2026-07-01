@@ -9,16 +9,17 @@ import org.springframework.stereotype.Component;
 public class ExchangeRateImporter {
 
     private final CurrencyRepository currencyRepository;
+    private final BundesbankRestClient bundesbankRestClient;
 
-    public ExchangeRateImporter(CurrencyRepository currencyRepository) {
+    public ExchangeRateImporter(CurrencyRepository currencyRepository, BundesbankRestClient bundesbankRestClient) {
         this.currencyRepository = currencyRepository;
+        this.bundesbankRestClient = bundesbankRestClient;
     }
 
     public void importExchangeRates() {
-        List<Currency> currencies = List.of(
-                new Currency("CHF", "Swiss franc"),
-                new Currency("EUR", "Euro")
-        );
+        List<Currency> currencies = bundesbankRestClient.getCurrencies().stream()
+                .map(currency -> new Currency(currency.code(), currency.name()))
+                .toList();
 
         currencyRepository.saveAll(currencies);
     }

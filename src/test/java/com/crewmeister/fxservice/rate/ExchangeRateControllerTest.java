@@ -22,7 +22,7 @@ class ExchangeRateControllerTest {
 
     private static final List<CurrencyDTO> CURRENCIES = List.of(
             new CurrencyDTO("CHF", "Swiss franc"),
-            new CurrencyDTO("EUR", "Euro")
+            new CurrencyDTO("USD", "US dollar")
     );
 
     @Autowired
@@ -35,8 +35,8 @@ class ExchangeRateControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].code").value("CHF"))
                 .andExpect(jsonPath("$[0].name").value("Swiss franc"))
-                .andExpect(jsonPath("$[1].code").value("EUR"))
-                .andExpect(jsonPath("$[1].name").value("Euro"));
+                .andExpect(jsonPath("$[1].code").value("USD"))
+                .andExpect(jsonPath("$[1].name").value("US dollar"));
     }
 
     @TestConfiguration

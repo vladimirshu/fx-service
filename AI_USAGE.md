@@ -18,3 +18,22 @@ for that:
 4. Create an exchange rate service that lists all currencies. Method must return list of currencyDTO
 5. Create an exchange rate controller with one endpoint that returns all currencies, based on the API description in the README file.
 6. Create a test suite for the given use case. It must consist of the two test files: service and controller unit tests. Create a small test dataset consisting of two different currencies.
+
+## Initial currency import
+Let's implement currency's import on application startup.
+Please reference C4 components model diagram (.puml) description for the architecture overview.
+
+for that:
+create exchange rate import job with one method that starts import of the currency exchange data and is executed on application startup. The method must invoke the ExchangeRateImporter class method that mocks response with 2 sample currencies (later it will call BundesbankClient to get real data). For now, skip any logic for the exchange rate entity.
+
+## get currency list from Bundesbank
+let's implement an API call to the Bundesbank and parse the response so it can be used by application logic
+
+for that:
+- create a BundesbankRestClient that gets list of currencies in a json format by url
+  GET https://api.statistiken.bundesbank.de/rest/data/BBEX3/D..EUR.BB.AC.000?startPeriod=2026-06-30&endPeriod=2026-06-30&format=sdmx_json
+  please update Start and End periods in the url parameters with the current date.
+  Expected response is attached.
+  Please extract list of the currencies from the response.
+- create ImportedCurrency java record and map bundesbank API response to it.
+- update ExchangeRateImporter so it uses BundesbankRestClient instead of the sample data

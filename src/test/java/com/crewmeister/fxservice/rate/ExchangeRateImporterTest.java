@@ -2,9 +2,9 @@ package com.crewmeister.fxservice.rate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.crewmeister.fxservice.currency.Currency;
 import com.crewmeister.fxservice.currency.CurrencyRepository;
@@ -21,17 +21,29 @@ class ExchangeRateImporterTest {
     @Mock
     private CurrencyRepository currencyRepository;
 
+    @Mock
+    private BundesbankRestClient bundesbankRestClient;
+
     private ExchangeRateImporter exchangeRateImporter;
 
     @BeforeEach
     void setUp() {
-        exchangeRateImporter = new ExchangeRateImporter(currencyRepository);
+        exchangeRateImporter = new ExchangeRateImporter(currencyRepository, bundesbankRestClient);
     }
 
     @Test
-    void importExchangeRatesStoresCurrenciesFromMockedResponse() {
+    void importExchangeRatesStoresCurrenciesFromBundesbankResponse() {
+        when(bundesbankRestClient.getCurrencies()).thenReturn(List.of(
+                new ImportedCurrency("CHF", "Swiss franc"),
+                new ImportedCurrency("USD", "US dollar")
+        ));
+
         exchangeRateImporter.importExchangeRates();
 
-        verify(currencyRepository).saveAll(anyList());
+        verify(currencyRepository).saveAll(argThat(currencies -> {
+            assertThat(currencies).extracting(Currency::getCode, Currency::getName)
+                    .containsExactly(tuple("CHF", "Swiss franc"), tuple("USD", "US dollar"));
+            return true;
+        }));
     }
 }

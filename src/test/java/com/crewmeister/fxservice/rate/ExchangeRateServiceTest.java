@@ -21,7 +21,7 @@ class ExchangeRateServiceTest {
 
     private static final List<Currency> CURRENCIES = List.of(
             new Currency("CHF", "Swiss franc"),
-            new Currency("EUR", "Euro")
+            new Currency("USD", "US dollar")
     );
 
     @Mock
@@ -44,7 +44,7 @@ class ExchangeRateServiceTest {
 
         assertThat(currencies).containsExactly(
                 new CurrencyDTO("CHF", "Swiss franc"),
-                new CurrencyDTO("EUR", "Euro")
+                new CurrencyDTO("USD", "US dollar")
         );
         verify(currencyRepository).findAll(Sort.by("code"));
     }
