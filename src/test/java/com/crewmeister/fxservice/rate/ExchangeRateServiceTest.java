@@ -8,6 +8,8 @@ import com.crewmeister.fxservice.currency.Currency;
 import com.crewmeister.fxservice.currency.CurrencyDTO;
 import com.crewmeister.fxservice.currency.CurrencyMapper;
 import com.crewmeister.fxservice.currency.CurrencyRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,16 +26,32 @@ class ExchangeRateServiceTest {
             new Currency("USD", "US dollar")
     );
 
+    private static final List<ExchangeRate> EXCHANGE_RATES = List.of(
+            new ExchangeRate(CURRENCIES.get(0), LocalDate.of(2026, 6, 29), new BigDecimal("0.934500")),
+            new ExchangeRate(CURRENCIES.get(0), LocalDate.of(2026, 6, 30), new BigDecimal("0.936100")),
+            new ExchangeRate(CURRENCIES.get(1), LocalDate.of(2026, 6, 30), new BigDecimal("1.095600"))
+    );
+
     @Mock
     private CurrencyRepository currencyRepository;
 
+    @Mock
+    private ExchangeRateRepository exchangeRateRepository;
+
     private final CurrencyMapper currencyMapper = new CurrencyMapper();
+
+    private final ExchangeRateMapper exchangeRateMapper = new ExchangeRateMapper();
 
     private ExchangeRateService exchangeRateService;
 
     @BeforeEach
     void setUp() {
-        exchangeRateService = new ExchangeRateService(currencyRepository, currencyMapper);
+        exchangeRateService = new ExchangeRateService(
+                currencyRepository,
+                currencyMapper,
+                exchangeRateRepository,
+                exchangeRateMapper
+        );
     }
 
     @Test
@@ -47,5 +65,19 @@ class ExchangeRateServiceTest {
                 new CurrencyDTO("USD", "US dollar")
         );
         verify(currencyRepository).findAll(Sort.by("code"));
+    }
+
+    @Test
+    void listExchangeRatesReturnsAllExchangeRatesAsDtos() {
+        when(exchangeRateRepository.findAllOrderedByCurrencyCodeAndDate()).thenReturn(EXCHANGE_RATES);
+
+        List<ExchangeRateDTO> exchangeRates = exchangeRateService.listExchangeRates();
+
+        assertThat(exchangeRates).containsExactly(
+                new ExchangeRateDTO("CHF", LocalDate.of(2026, 6, 29), new BigDecimal("0.934500")),
+                new ExchangeRateDTO("CHF", LocalDate.of(2026, 6, 30), new BigDecimal("0.936100")),
+                new ExchangeRateDTO("USD", LocalDate.of(2026, 6, 30), new BigDecimal("1.095600"))
+        );
+        verify(exchangeRateRepository).findAllOrderedByCurrencyCodeAndDate();
     }
 }

@@ -44,3 +44,13 @@ Let's implement daily update of the currency exchange data
 for that:
 1. Add another method to the ExchangeRateImportJob that updates currency exchange data and is scheduled to be executed daily, at 12 am.
 2. Add another method to the ExchangeRateImporter that will implement the currency exchange data update logic. For that use existing logic to get a list of all currencies from the BundesbankRestClient. Then compare the result with the currencies available in the database. Find delta and update the DB: If there are new currencies available via API, please add them to the database. If some currencies were removed, please also remove them from the database.
+
+## Implementing use case 2: Get all EUR-FX exchange rates
+Let's implement the following use case:
+As a client, I want to get all EUR-FX exchange rates at all available dates as a collection.
+
+For that:
+- create ExchangeRate entity based on the definition in the readme file
+- create relevant service method; DTO and mapper classes the same way they exist for the currency.
+- create controller endpoint based on the definition in the readme file
+- create test classes for the service and controller logic

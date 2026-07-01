@@ -12,15 +12,30 @@ public class ExchangeRateService {
 
     private final CurrencyRepository currencyRepository;
     private final CurrencyMapper currencyMapper;
+    private final ExchangeRateRepository exchangeRateRepository;
+    private final ExchangeRateMapper exchangeRateMapper;
 
-    public ExchangeRateService(CurrencyRepository currencyRepository, CurrencyMapper currencyMapper) {
+    public ExchangeRateService(
+            CurrencyRepository currencyRepository,
+            CurrencyMapper currencyMapper,
+            ExchangeRateRepository exchangeRateRepository,
+            ExchangeRateMapper exchangeRateMapper
+    ) {
         this.currencyRepository = currencyRepository;
         this.currencyMapper = currencyMapper;
+        this.exchangeRateRepository = exchangeRateRepository;
+        this.exchangeRateMapper = exchangeRateMapper;
     }
 
     public List<CurrencyDTO> listCurrencies() {
         return currencyRepository.findAll(Sort.by("code")).stream()
                 .map(currencyMapper::toDto)
+                .toList();
+    }
+
+    public List<ExchangeRateDTO> listExchangeRates() {
+        return exchangeRateRepository.findAllOrderedByCurrencyCodeAndDate().stream()
+                .map(exchangeRateMapper::toDto)
                 .toList();
     }
 }

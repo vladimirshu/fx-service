@@ -20,4 +20,9 @@ public class ExchangeRateController {
     public List<CurrencyDTO> listCurrencies() {
         return exchangeRateService.listCurrencies();
     }
+
+    @GetMapping(value = "/rate")
+    public List<ExchangeRateDTO> listExchangeRates() {
+        return exchangeRateService.listExchangeRates();
+    }
 }
