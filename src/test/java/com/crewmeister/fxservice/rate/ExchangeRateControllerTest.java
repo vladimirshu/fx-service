@@ -68,7 +68,7 @@ class ExchangeRateControllerTest {
     void getExchangeRateReturnsRateForCurrencyAndDate() throws Exception {
         mockMvc.perform(get("/api/v1/rate")
                         .param("currency", "USD")
-                        .param("date", "30-06-2026"))
+                        .param("date", "2026-06-30"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().string("1.095600"));
@@ -78,7 +78,7 @@ class ExchangeRateControllerTest {
     void getExchangeRateReturnsNotFoundWhenRateDoesNotExist() throws Exception {
         mockMvc.perform(get("/api/v1/rate")
                         .param("currency", "USD")
-                        .param("date", "28-06-2026"))
+                        .param("date", "2026-06-28"))
                 .andExpect(status().isNotFound());
     }
 
@@ -92,6 +92,27 @@ class ExchangeRateControllerTest {
     @Test
     void getExchangeRateRejectsDateWithoutCurrency() throws Exception {
         mockMvc.perform(get("/api/v1/rate")
+                        .param("date", "2026-06-30"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getExchangeRateRejectsCurrencyThatIsNotThreeUppercaseLetters() throws Exception {
+        mockMvc.perform(get("/api/v1/rate")
+                        .param("currency", "usd")
+                        .param("date", "2026-06-30"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/v1/rate")
+                        .param("currency", "US")
+                        .param("date", "2026-06-30"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getExchangeRateRejectsNonIsoDate() throws Exception {
+        mockMvc.perform(get("/api/v1/rate")
+                        .param("currency", "USD")
                         .param("date", "30-06-2026"))
                 .andExpect(status().isBadRequest());
     }
@@ -100,7 +121,7 @@ class ExchangeRateControllerTest {
     void convertToEuroReturnsConvertedAmountForCurrencyAndDate() throws Exception {
         mockMvc.perform(get("/api/v1/convert")
                         .param("currency", "USD")
-                        .param("date", "30-06-2026")
+                        .param("date", "2026-06-30")
                         .param("amount", "100"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -111,9 +132,60 @@ class ExchangeRateControllerTest {
     void convertToEuroReturnsNotFoundWhenRateDoesNotExist() throws Exception {
         mockMvc.perform(get("/api/v1/convert")
                         .param("currency", "USD")
-                        .param("date", "28-06-2026")
+                        .param("date", "2026-06-28")
                         .param("amount", "100"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void convertToEuroRejectsInvalidCurrency() throws Exception {
+        mockMvc.perform(get("/api/v1/convert")
+                        .param("currency", "US1")
+                        .param("date", "2026-06-30")
+                        .param("amount", "100"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void convertToEuroRejectsNonIsoDate() throws Exception {
+        mockMvc.perform(get("/api/v1/convert")
+                        .param("currency", "USD")
+                        .param("date", "30-06-2026")
+                        .param("amount", "100"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void convertToEuroRejectsNonPositiveAmount() throws Exception {
+        mockMvc.perform(get("/api/v1/convert")
+                        .param("currency", "USD")
+                        .param("date", "2026-06-30")
+                        .param("amount", "0"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/v1/convert")
+                        .param("currency", "USD")
+                        .param("date", "2026-06-30")
+                        .param("amount", "-1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void convertToEuroRejectsMissingRequiredParameters() throws Exception {
+        mockMvc.perform(get("/api/v1/convert")
+                        .param("date", "2026-06-30")
+                        .param("amount", "100"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/v1/convert")
+                        .param("currency", "USD")
+                        .param("amount", "100"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/v1/convert")
+                        .param("currency", "USD")
+                        .param("date", "2026-06-30"))
+                .andExpect(status().isBadRequest());
     }
 
     @TestConfiguration
