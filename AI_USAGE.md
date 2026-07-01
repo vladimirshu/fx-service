@@ -72,3 +72,11 @@ For that:
 - update logic of ExchangeRateImporter#updateExchangeRates() method this way:
   Right after currencies got updated, do update of the exchange rates:
   for all currencies available, make an API call via the BundesbankRestClient to get exchange rate for yesterday. Save new rates in the database.
+
+## Getting an exchange rate for a particular date
+
+Let's implement the following use case:
+- As a client, I want to get the EUR-FX exchange rate at a particular day.
+
+for that:
+- create new methods in the service and controller according to API definition in the readme file

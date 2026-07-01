@@ -3,7 +3,10 @@ package com.crewmeister.fxservice.rate;
 import com.crewmeister.fxservice.currency.CurrencyDTO;
 import com.crewmeister.fxservice.currency.CurrencyMapper;
 import com.crewmeister.fxservice.currency.CurrencyRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -37,5 +40,10 @@ public class ExchangeRateService {
         return exchangeRateRepository.findAllOrderedByCurrencyCodeAndDate().stream()
                 .map(exchangeRateMapper::toDto)
                 .toList();
+    }
+
+    public Optional<BigDecimal> getExchangeRate(String currencyCode, LocalDate date) {
+        return exchangeRateRepository.findByCurrencyCodeAndDate(currencyCode, date)
+                .map(ExchangeRate::getRate);
     }
 }

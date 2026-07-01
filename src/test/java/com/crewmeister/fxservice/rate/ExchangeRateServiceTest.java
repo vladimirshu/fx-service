@@ -11,6 +11,7 @@ import com.crewmeister.fxservice.currency.CurrencyRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,5 +80,28 @@ class ExchangeRateServiceTest {
                 new ExchangeRateDTO("USD", LocalDate.of(2026, 6, 30), new BigDecimal("1.095600"))
         );
         verify(exchangeRateRepository).findAllOrderedByCurrencyCodeAndDate();
+    }
+
+    @Test
+    void getExchangeRateReturnsRateForCurrencyAndDate() {
+        LocalDate date = LocalDate.of(2026, 6, 30);
+        when(exchangeRateRepository.findByCurrencyCodeAndDate("USD", date))
+                .thenReturn(Optional.of(EXCHANGE_RATES.get(2)));
+
+        Optional<BigDecimal> exchangeRate = exchangeRateService.getExchangeRate("USD", date);
+
+        assertThat(exchangeRate).contains(new BigDecimal("1.095600"));
+        verify(exchangeRateRepository).findByCurrencyCodeAndDate("USD", date);
+    }
+
+    @Test
+    void getExchangeRateReturnsEmptyWhenNoRateExists() {
+        LocalDate date = LocalDate.of(2026, 6, 28);
+        when(exchangeRateRepository.findByCurrencyCodeAndDate("USD", date)).thenReturn(Optional.empty());
+
+        Optional<BigDecimal> exchangeRate = exchangeRateService.getExchangeRate("USD", date);
+
+        assertThat(exchangeRate).isEmpty();
+        verify(exchangeRateRepository).findByCurrencyCodeAndDate("USD", date);
     }
 }

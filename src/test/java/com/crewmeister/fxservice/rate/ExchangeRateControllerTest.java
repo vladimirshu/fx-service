@@ -9,6 +9,7 @@ import com.crewmeister.fxservice.currency.CurrencyDTO;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -63,6 +64,38 @@ class ExchangeRateControllerTest {
                 .andExpect(jsonPath("$[2].rate").value(1.095600));
     }
 
+    @Test
+    void getExchangeRateReturnsRateForCurrencyAndDate() throws Exception {
+        mockMvc.perform(get("/api/v1/rate")
+                        .param("currency", "USD")
+                        .param("date", "30-06-2026"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().string("1.095600"));
+    }
+
+    @Test
+    void getExchangeRateReturnsNotFoundWhenRateDoesNotExist() throws Exception {
+        mockMvc.perform(get("/api/v1/rate")
+                        .param("currency", "USD")
+                        .param("date", "28-06-2026"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getExchangeRateRejectsCurrencyWithoutDate() throws Exception {
+        mockMvc.perform(get("/api/v1/rate")
+                        .param("currency", "USD"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getExchangeRateRejectsDateWithoutCurrency() throws Exception {
+        mockMvc.perform(get("/api/v1/rate")
+                        .param("date", "30-06-2026"))
+                .andExpect(status().isBadRequest());
+    }
+
     @TestConfiguration
     static class TestConfig {
 
@@ -77,6 +110,14 @@ class ExchangeRateControllerTest {
                 @Override
                 public List<ExchangeRateDTO> listExchangeRates() {
                     return EXCHANGE_RATES;
+                }
+
+                @Override
+                public Optional<BigDecimal> getExchangeRate(String currency, LocalDate date) {
+                    if ("USD".equals(currency) && LocalDate.of(2026, 6, 30).equals(date)) {
+                        return Optional.of(new BigDecimal("1.095600"));
+                    }
+                    return Optional.empty();
                 }
             };
         }
