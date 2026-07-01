@@ -4,6 +4,7 @@ import com.crewmeister.fxservice.currency.CurrencyDTO;
 import com.crewmeister.fxservice.currency.CurrencyMapper;
 import com.crewmeister.fxservice.currency.CurrencyRepository;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -45,5 +46,10 @@ public class ExchangeRateService {
     public Optional<BigDecimal> getExchangeRate(String currencyCode, LocalDate date) {
         return exchangeRateRepository.findByCurrencyCodeAndDate(currencyCode, date)
                 .map(ExchangeRate::getRate);
+    }
+
+    public Optional<BigDecimal> convertToEuro(String currencyCode, LocalDate date, BigDecimal amount) {
+        return getExchangeRate(currencyCode, date)
+                .map(rate -> amount.divide(rate, 2, RoundingMode.HALF_UP));
     }
 }

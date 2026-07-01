@@ -41,6 +41,16 @@ public class ExchangeRateController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
+    @GetMapping("/convert")
+    public BigDecimal convertToEuro(
+            @RequestParam String currency,
+            @RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate date,
+            @RequestParam BigDecimal amount
+    ) {
+        return exchangeRateService.convertToEuro(currency, date, amount)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
     @GetMapping(value = "/rate", params = {"currency", "!date"})
     public void rejectCurrencyOnlyRateLookup() {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);

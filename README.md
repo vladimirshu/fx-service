@@ -58,8 +58,12 @@ Response example:
 ```json
 [
   {
-    "code": "EUR",
-    "name": "Euro"
+    "code": "USD",
+    "name": "US Dollar"
+  },
+  {
+    "code": "CHF",
+    "name": "Swiss Franc"
   }
 ]
 ```
@@ -75,9 +79,9 @@ Response example:
 ```json
 [
   {
-    "currency": "EUR",
+    "currency": "USD",
     "date": "30-06-2026",
-    "rate": 1.0956
+    "rate": 0,9563
   }
 ]
 ```
@@ -85,19 +89,31 @@ Response example:
 ### Get the exchange rate for a currency on a particular date:
 
 ```http
-GET /api/v1/rate?currency=EUR&date=30-06-2026
+GET /api/v1/rate?currency=USD&date=30-06-2026
 ```
 
 Response example:
 
 ```json
-1.0956
+"1,0956"
 ```
 
 Unsupported query combinations:
 
-- `GET /api/v1/rate?currency=EUR`
+- `GET /api/v1/rate?currency=USD`
 - `GET /api/v1/rate?date=30-06-2026`
+
+### Getting converted foreign exchange amount
+
+```http
+GET /api/v1/convert?currency=USD&date=30-06-2026&amount=100
+```
+
+Response example:
+
+```json
+"94,24"
+```
 
 ## How To Run
 

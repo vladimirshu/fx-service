@@ -104,4 +104,35 @@ class ExchangeRateServiceTest {
         assertThat(exchangeRate).isEmpty();
         verify(exchangeRateRepository).findByCurrencyCodeAndDate("USD", date);
     }
+
+    @Test
+    void convertToEuroReturnsConvertedAmountRoundedToCents() {
+        LocalDate date = LocalDate.of(2026, 6, 30);
+        when(exchangeRateRepository.findByCurrencyCodeAndDate("USD", date))
+                .thenReturn(Optional.of(EXCHANGE_RATES.get(2)));
+
+        Optional<BigDecimal> convertedAmount = exchangeRateService.convertToEuro(
+                "USD",
+                date,
+                new BigDecimal("100.00")
+        );
+
+        assertThat(convertedAmount).contains(new BigDecimal("91.27"));
+        verify(exchangeRateRepository).findByCurrencyCodeAndDate("USD", date);
+    }
+
+    @Test
+    void convertToEuroReturnsEmptyWhenNoRateExists() {
+        LocalDate date = LocalDate.of(2026, 6, 28);
+        when(exchangeRateRepository.findByCurrencyCodeAndDate("USD", date)).thenReturn(Optional.empty());
+
+        Optional<BigDecimal> convertedAmount = exchangeRateService.convertToEuro(
+                "USD",
+                date,
+                new BigDecimal("100.00")
+        );
+
+        assertThat(convertedAmount).isEmpty();
+        verify(exchangeRateRepository).findByCurrencyCodeAndDate("USD", date);
+    }
 }

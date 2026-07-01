@@ -80,3 +80,12 @@ Let's implement the following use case:
 
 for that:
 - create new methods in the service and controller according to API definition in the readme file
+
+## Getting converted foreign exchange amount
+
+Let's implement the following use case:
+- As a client, I want to get a foreign exchange amount for a given currency converted to EUR on a particular day.
+
+for that:
+- great corresponding service method
+- create controller endpoint based on the API definition in the readme file

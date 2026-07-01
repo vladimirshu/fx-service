@@ -96,6 +96,26 @@ class ExchangeRateControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void convertToEuroReturnsConvertedAmountForCurrencyAndDate() throws Exception {
+        mockMvc.perform(get("/api/v1/convert")
+                        .param("currency", "USD")
+                        .param("date", "30-06-2026")
+                        .param("amount", "100"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().string("91.27"));
+    }
+
+    @Test
+    void convertToEuroReturnsNotFoundWhenRateDoesNotExist() throws Exception {
+        mockMvc.perform(get("/api/v1/convert")
+                        .param("currency", "USD")
+                        .param("date", "28-06-2026")
+                        .param("amount", "100"))
+                .andExpect(status().isNotFound());
+    }
+
     @TestConfiguration
     static class TestConfig {
 
@@ -116,6 +136,14 @@ class ExchangeRateControllerTest {
                 public Optional<BigDecimal> getExchangeRate(String currency, LocalDate date) {
                     if ("USD".equals(currency) && LocalDate.of(2026, 6, 30).equals(date)) {
                         return Optional.of(new BigDecimal("1.095600"));
+                    }
+                    return Optional.empty();
+                }
+
+                @Override
+                public Optional<BigDecimal> convertToEuro(String currency, LocalDate date, BigDecimal amount) {
+                    if ("USD".equals(currency) && LocalDate.of(2026, 6, 30).equals(date)) {
+                        return Optional.of(new BigDecimal("91.27"));
                     }
                     return Optional.empty();
                 }
