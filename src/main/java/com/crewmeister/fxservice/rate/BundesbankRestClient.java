@@ -2,16 +2,22 @@ package com.crewmeister.fxservice.rate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @Component
 public class BundesbankRestClient {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BundesbankRestClient.class);
 
     private static final String BASE_URL = "https://api.statistiken.bundesbank.de";
     private static final String CURRENCIES_DATA_PATH = "/rest/data/BBEX3/D..EUR.BB.AC.000";
@@ -26,17 +32,26 @@ public class BundesbankRestClient {
 
     public List<ImportedCurrency> getCurrencies() {
         String dateString = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        JsonNode response = restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path(CURRENCIES_DATA_PATH)
-                        .queryParam("startPeriod", dateString)
-                        .queryParam("endPeriod", dateString)
-                        .queryParam("format", "sdmx_json")
-                        .build())
-                .retrieve()
-                .body(JsonNode.class);
+        try {
+            JsonNode response = restClient.get()
+                    .uri(uriBuilder -> {
+                        URI uri = uriBuilder
+                                .path(CURRENCIES_DATA_PATH)
+                                .queryParam("startPeriod", dateString)
+                                .queryParam("endPeriod", dateString)
+                                .queryParam("format", "sdmx_json")
+                                .build();
+                        LOGGER.debug("Resolved Bundesbank request URL: {}", uri);
+                        return uri;
+                    })
+                    .retrieve()
+                    .body(JsonNode.class);
 
-        return parseCurrencies(response);
+            return parseCurrencies(response);
+        } catch (RestClientException ex) {
+            LOGGER.error("Bundesbank HTTP call failed", ex);
+            throw ex;
+        }
     }
 
     public List<ImportedExchangeRate> getExchangeRates(String currencyCode) {
@@ -48,18 +63,27 @@ public class BundesbankRestClient {
     }
 
     private List<ImportedExchangeRate> getExchangeRates(String currencyCode, LocalDate startDate, LocalDate endDate) {
-        JsonNode response = restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path(EXCHANGE_RATES_DATA_PATH_TEMPLATE.formatted(currencyCode))
-                        .queryParamIfPresent("startPeriod", formatDate(startDate))
-                        .queryParamIfPresent("endPeriod", formatDate(endDate))
-                        .queryParam("format", "sdmx_json")
-                        .queryParam("detail", "dataonly")
-                        .build())
-                .retrieve()
-                .body(JsonNode.class);
+        try {
+            JsonNode response = restClient.get()
+                    .uri(uriBuilder -> {
+                        URI uri = uriBuilder
+                                .path(EXCHANGE_RATES_DATA_PATH_TEMPLATE.formatted(currencyCode))
+                                .queryParamIfPresent("startPeriod", formatDate(startDate))
+                                .queryParamIfPresent("endPeriod", formatDate(endDate))
+                                .queryParam("format", "sdmx_json")
+                                .queryParam("detail", "dataonly")
+                                .build();
+                        LOGGER.debug("Resolved Bundesbank request URL: {}", uri);
+                        return uri;
+                    })
+                    .retrieve()
+                    .body(JsonNode.class);
 
-        return parseExchangeRates(currencyCode, response);
+            return parseExchangeRates(currencyCode, response);
+        } catch (RestClientException ex) {
+            LOGGER.error("Bundesbank HTTP call failed", ex);
+            throw ex;
+        }
     }
 
     private java.util.Optional<String> formatDate(LocalDate date) {
@@ -69,59 +93,94 @@ public class BundesbankRestClient {
     }
 
     List<ImportedCurrency> parseCurrencies(JsonNode response) {
-        JsonNode seriesDimensions = response.path("data").path("structure").path("dimensions").path("series");
-        List<ImportedCurrency> currencies = new ArrayList<>();
-
-        for (JsonNode dimension : seriesDimensions) {
-            if (!"BBK_STD_CURRENCY".equals(dimension.path("id").asText())) {
-                continue;
+        try {
+            if (response == null || response.isMissingNode() || response.isNull()) {
+                LOGGER.warn("Bundesbank response is empty or incomplete");
+                return List.of();
             }
 
-            for (JsonNode currency : dimension.path("values")) {
-                String code = currency.path("id").asText();
-                String name = currency.path("name").asText(code);
+            JsonNode seriesDimensions = response.path("data").path("structure").path("dimensions").path("series");
+            if (!seriesDimensions.isArray()) {
+                LOGGER.warn("Bundesbank response is empty or incomplete");
+                return List.of();
+            }
 
-                if (!code.isBlank()) {
-                    currencies.add(new ImportedCurrency(code, name));
+            List<ImportedCurrency> currencies = new ArrayList<>();
+
+            for (JsonNode dimension : seriesDimensions) {
+                if (!"BBK_STD_CURRENCY".equals(dimension.path("id").asText())) {
+                    continue;
+                }
+
+                for (JsonNode currency : dimension.path("values")) {
+                    String code = currency.path("id").asText();
+                    String name = currency.path("name").asText(code);
+
+                    if (!code.isBlank()) {
+                        currencies.add(new ImportedCurrency(code, name));
+                    }
                 }
             }
-        }
 
-        return currencies.stream()
-                .sorted(Comparator.comparing(ImportedCurrency::code))
-                .toList();
+            return currencies.stream()
+                    .sorted(Comparator.comparing(ImportedCurrency::code))
+                    .toList();
+        } catch (RuntimeException ex) {
+            LOGGER.error("Bundesbank response cannot be parsed", ex);
+            throw ex;
+        }
     }
 
     List<ImportedExchangeRate> parseExchangeRates(String currencyCode, JsonNode response) {
-        List<LocalDate> observationDates = parseObservationDates(response);
-        List<ImportedExchangeRate> exchangeRates = new ArrayList<>();
+        try {
+            if (response == null || response.isMissingNode() || response.isNull()) {
+                LOGGER.warn("Bundesbank response is empty or incomplete");
+                return List.of();
+            }
 
-        JsonNode dataSets = response.path("data").path("dataSets");
-        for (JsonNode dataSet : dataSets) {
-            JsonNode series = dataSet.path("series");
-            series.fields().forEachRemaining(seriesEntry -> {
-                JsonNode observations = seriesEntry.getValue().path("observations");
-                observations.fields().forEachRemaining(observationEntry -> {
-                    JsonNode observation = observationEntry.getValue();
-                    JsonNode rate = observation.path(0);
+            List<LocalDate> observationDates = parseObservationDates(response);
+            if (observationDates.isEmpty()) {
+                LOGGER.warn("Bundesbank response is empty or incomplete");
+                return List.of();
+            }
 
-                    if (rate.isMissingNode() || rate.isNull() || rate.asText().isBlank()) {
-                        return;
-                    }
+            List<ImportedExchangeRate> exchangeRates = new ArrayList<>();
 
-                    int dateIndex = Integer.parseInt(observationEntry.getKey());
-                    exchangeRates.add(new ImportedExchangeRate(
-                            currencyCode,
-                            observationDates.get(dateIndex),
-                            new BigDecimal(rate.asText())
-                    ));
+            JsonNode dataSets = response.path("data").path("dataSets");
+            if (!dataSets.isArray()) {
+                LOGGER.warn("Bundesbank response is empty or incomplete");
+                return List.of();
+            }
+
+            for (JsonNode dataSet : dataSets) {
+                JsonNode series = dataSet.path("series");
+                series.fields().forEachRemaining(seriesEntry -> {
+                    JsonNode observations = seriesEntry.getValue().path("observations");
+                    observations.fields().forEachRemaining(observationEntry -> {
+                        JsonNode observation = observationEntry.getValue();
+                        JsonNode rate = observation.path(0);
+
+                        if (rate.isMissingNode() || rate.isNull() || rate.asText().isBlank()) {
+                            return;
+                        }
+
+                        int dateIndex = Integer.parseInt(observationEntry.getKey());
+                        exchangeRates.add(new ImportedExchangeRate(
+                                currencyCode,
+                                observationDates.get(dateIndex),
+                                new BigDecimal(rate.asText())
+                        ));
+                    });
                 });
-            });
-        }
+            }
 
-        return exchangeRates.stream()
-                .sorted(Comparator.comparing(ImportedExchangeRate::date))
-                .toList();
+            return exchangeRates.stream()
+                    .sorted(Comparator.comparing(ImportedExchangeRate::date))
+                    .toList();
+        } catch (RuntimeException ex) {
+            LOGGER.error("Bundesbank response cannot be parsed", ex);
+            throw ex;
+        }
     }
 
     private List<LocalDate> parseObservationDates(JsonNode response) {

@@ -12,10 +12,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ExchangeRateImporter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExchangeRateImporter.class);
 
     private final CurrencyRepository currencyRepository;
     private final ExchangeRateRepository exchangeRateRepository;
@@ -34,13 +38,20 @@ public class ExchangeRateImporter {
     @Transactional
     public void importExchangeRatesAndCurrencies() {
         if (hasImportedData()) {
+            LOGGER.info("Initial exchange rate import skipped because data already exists");
             return;
         }
 
         List<ImportedCurrency> importedCurrencies = bundesbankRestClient.getCurrencies();
-        importCurrencies(importedCurrencies);
+        int importedCurrencyCount = importCurrencies(importedCurrencies);
 
-        importExchangeRates();
+        int importedExchangeRateCount = importExchangeRates();
+        LOGGER.info(
+                "Imported {} currencies and {} exchange rates",
+                importedCurrencyCount,
+                importedExchangeRateCount
+        );
+        LOGGER.info("Initial exchange rate import completed successfully");
     }
 
     @Transactional
@@ -48,35 +59,44 @@ public class ExchangeRateImporter {
         Map<String, ImportedCurrency> importedCurrenciesByCode = getImportedCurrenciesByCode();
         Set<String> existingCurrencyCodes = getExistingCurrencyCodes();
 
-        addNewCurrencies(importedCurrenciesByCode, existingCurrencyCodes);
+        int importedCurrencyCount = addNewCurrencies(importedCurrenciesByCode, existingCurrencyCodes);
         removeUnavailableCurrencies(importedCurrenciesByCode, existingCurrencyCodes);
 
-        importExchangeRates(LocalDate.now().minusDays(1));
+        int importedExchangeRateCount = importExchangeRates(LocalDate.now().minusDays(1));
+        LOGGER.info(
+                "Imported {} currencies and {} exchange rates",
+                importedCurrencyCount,
+                importedExchangeRateCount
+        );
     }
 
-    private void importCurrencies(List<ImportedCurrency> importedCurrencies) {
+    private int importCurrencies(List<ImportedCurrency> importedCurrencies) {
+        LOGGER.debug("Parsed {} currency records before persistence", importedCurrencies.size());
         List<Currency> currencies = importedCurrencies.stream()
                 .map(this::toCurrency)
                 .toList();
 
         currencyRepository.saveAll(currencies);
+        return currencies.size();
     }
 
     private boolean hasImportedData() {
         return currencyRepository.count() > 0 && exchangeRateRepository.count() > 0;
     }
 
-    private void importExchangeRates() {
-        importExchangeRates(null);
+    private int importExchangeRates() {
+        return importExchangeRates(null);
     }
 
-    private void importExchangeRates(LocalDate date) {
+    private int importExchangeRates(LocalDate date) {
         List<Currency> currencies = currencyRepository.findAll();
         List<ExchangeRate> exchangeRates = currencies.stream()
                 .flatMap(currency -> getExchangeRatesFor(currency, date))
                 .toList();
 
+        LOGGER.debug("Parsed {} exchange rate records before persistence", exchangeRates.size());
         exchangeRateRepository.saveAll(exchangeRates);
+        return exchangeRates.size();
     }
 
     private Map<String, ImportedCurrency> getImportedCurrenciesByCode() {
@@ -90,7 +110,7 @@ public class ExchangeRateImporter {
                 .collect(Collectors.toSet());
     }
 
-    private void addNewCurrencies(
+    private int addNewCurrencies(
             Map<String, ImportedCurrency> importedCurrenciesByCode,
             Set<String> existingCurrencyCodes
     ) {
@@ -101,6 +121,7 @@ public class ExchangeRateImporter {
                 .toList();
 
         currencyRepository.saveAll(currenciesToAdd);
+        return currenciesToAdd.size();
     }
 
     private void removeUnavailableCurrencies(
@@ -130,4 +151,5 @@ public class ExchangeRateImporter {
                 importedExchangeRate.rate()
         );
     }
+
 }

@@ -23,3 +23,7 @@ management:
       group:
         readiness:
           include: readinessState,exchangeRateData
+
+logging:
+  level:
+    com.crewmeister.fxservice: INFO
