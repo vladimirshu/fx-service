@@ -42,10 +42,14 @@ class ExchangeRateImporterTest {
                 new ImportedCurrency("CHF", "Swiss franc"),
                 new ImportedCurrency("USD", "US dollar")
         ));
-        when(bundesbankRestClient.getExchangeRates("CHF")).thenReturn(List.of(
+        when(currencyRepository.findAll()).thenReturn(List.of(
+                new Currency("CHF", "Swiss franc"),
+                new Currency("USD", "US dollar")
+        ));
+        when(bundesbankRestClient.getExchangeRates("CHF", null)).thenReturn(List.of(
                 new ImportedExchangeRate("CHF", LocalDate.of(2026, 6, 29), new BigDecimal("0.9351"))
         ));
-        when(bundesbankRestClient.getExchangeRates("USD")).thenReturn(List.of(
+        when(bundesbankRestClient.getExchangeRates("USD", null)).thenReturn(List.of(
                 new ImportedExchangeRate("USD", LocalDate.of(2026, 6, 29), new BigDecimal("1.1406")),
                 new ImportedExchangeRate("USD", LocalDate.of(2026, 6, 30), new BigDecimal("1.1394"))
         ));
@@ -72,24 +76,74 @@ class ExchangeRateImporterTest {
     }
 
     @Test
-    void updateExchangeRatesAddsNewCurrenciesAndRemovesUnavailableCurrencies() {
-        when(bundesbankRestClient.getCurrencies()).thenReturn(List.of(
-                new ImportedCurrency("CHF", "Swiss franc"),
-                new ImportedCurrency("JPY", "Japanese yen"),
-                new ImportedCurrency("USD", "US dollar")
-        ));
-        when(currencyRepository.findAll()).thenReturn(List.of(
-                new Currency("CAD", "Canadian dollar"),
-                new Currency("CHF", "Swiss franc")
-        ));
+    void updateExchangeRatesAndCurrenciesAddsNewCurrencies() {
+        stubUpdatedCurrenciesAndExchangeRates();
 
-        exchangeRateImporter.updateExchangeRates();
+        exchangeRateImporter.updateExchangeRatesAndCurrencies();
 
         verify(currencyRepository).saveAll(argThat(currencies -> {
             assertThat(currencies).extracting(Currency::getCode, Currency::getName)
                     .containsExactly(tuple("JPY", "Japanese yen"), tuple("USD", "US dollar"));
             return true;
         }));
+    }
+
+    @Test
+    void updateExchangeRatesAndCurrenciesRemovesUnavailableCurrencies() {
+        stubUpdatedCurrenciesAndExchangeRates();
+
+        exchangeRateImporter.updateExchangeRatesAndCurrencies();
+
         verify(currencyRepository).deleteAllById(List.of("CAD"));
+    }
+
+    @Test
+    void updateExchangeRatesAndCurrenciesImportsExchangeRatesForAvailableCurrencies() {
+        LocalDate yesterday = stubUpdatedCurrenciesAndExchangeRates();
+
+        exchangeRateImporter.updateExchangeRatesAndCurrencies();
+
+        verify(exchangeRateRepository).saveAll(argThat(exchangeRates -> {
+            assertThat(exchangeRates).extracting(
+                    exchangeRate -> exchangeRate.getCurrency().getCode(),
+                    ExchangeRate::getDate,
+                    ExchangeRate::getRate
+            ).containsExactly(
+                    tuple("CHF", yesterday, new BigDecimal("0.9351")),
+                    tuple("JPY", yesterday, new BigDecimal("170.12")),
+                    tuple("USD", yesterday, new BigDecimal("1.1394"))
+            );
+            return true;
+        }));
+    }
+
+    private LocalDate stubUpdatedCurrenciesAndExchangeRates() {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        when(bundesbankRestClient.getCurrencies()).thenReturn(List.of(
+                new ImportedCurrency("CHF", "Swiss franc"),
+                new ImportedCurrency("JPY", "Japanese yen"),
+                new ImportedCurrency("USD", "US dollar")
+        ));
+        when(currencyRepository.findAll()).thenReturn(
+                List.of(
+                        new Currency("CAD", "Canadian dollar"),
+                        new Currency("CHF", "Swiss franc")
+                ),
+                List.of(
+                        new Currency("CHF", "Swiss franc"),
+                        new Currency("JPY", "Japanese yen"),
+                        new Currency("USD", "US dollar")
+                )
+        );
+        when(bundesbankRestClient.getExchangeRates("CHF", yesterday)).thenReturn(List.of(
+                new ImportedExchangeRate("CHF", yesterday, new BigDecimal("0.9351"))
+        ));
+        when(bundesbankRestClient.getExchangeRates("JPY", yesterday)).thenReturn(List.of(
+                new ImportedExchangeRate("JPY", yesterday, new BigDecimal("170.12"))
+        ));
+        when(bundesbankRestClient.getExchangeRates("USD", yesterday)).thenReturn(List.of(
+                new ImportedExchangeRate("USD", yesterday, new BigDecimal("1.1394"))
+        ));
+        return yesterday;
     }
 }

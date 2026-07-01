@@ -3,12 +3,15 @@ package com.crewmeister.fxservice.rate;
 import com.crewmeister.fxservice.currency.Currency;
 import com.crewmeister.fxservice.currency.CurrencyRepository;
 import jakarta.transaction.Transactional;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,32 +34,38 @@ public class ExchangeRateImporter {
     @Transactional
     public void importExchangeRatesAndCurrencies() {
         List<ImportedCurrency> importedCurrencies = bundesbankRestClient.getCurrencies();
-        List<Currency> currencies = importCurrencies(importedCurrencies);
+        importCurrencies(importedCurrencies);
 
-        importExchangeRatesFor(currencies);
+        importExchangeRates();
     }
 
     @Transactional
-    public void updateExchangeRates() {
+    public void updateExchangeRatesAndCurrencies() {
         Map<String, ImportedCurrency> importedCurrenciesByCode = getImportedCurrenciesByCode();
         Set<String> existingCurrencyCodes = getExistingCurrencyCodes();
 
         addNewCurrencies(importedCurrenciesByCode, existingCurrencyCodes);
         removeUnavailableCurrencies(importedCurrenciesByCode, existingCurrencyCodes);
+
+        importExchangeRates(LocalDate.now().minusDays(1));
     }
 
-    private List<Currency> importCurrencies(List<ImportedCurrency> importedCurrencies) {
+    private void importCurrencies(List<ImportedCurrency> importedCurrencies) {
         List<Currency> currencies = importedCurrencies.stream()
                 .map(this::toCurrency)
                 .toList();
 
         currencyRepository.saveAll(currencies);
-        return currencies;
     }
 
-    private void importExchangeRatesFor(List<Currency> currencies) {
+    private void importExchangeRates() {
+        importExchangeRates(null);
+    }
+
+    private void importExchangeRates(LocalDate date) {
+        List<Currency> currencies = currencyRepository.findAll();
         List<ExchangeRate> exchangeRates = currencies.stream()
-                .flatMap(this::getExchangeRatesFor)
+                .flatMap(currency -> getExchangeRatesFor(currency, date))
                 .toList();
 
         exchangeRateRepository.saveAll(exchangeRates);
@@ -97,8 +106,8 @@ public class ExchangeRateImporter {
         currencyRepository.deleteAllById(currencyCodesToRemove);
     }
 
-    private Stream<ExchangeRate> getExchangeRatesFor(Currency currency) {
-        return bundesbankRestClient.getExchangeRates(currency.getCode()).stream()
+    private Stream<ExchangeRate> getExchangeRatesFor(Currency currency, LocalDate date) {
+        return bundesbankRestClient.getExchangeRates(currency.getCode(), date).stream()
                 .map(importedExchangeRate -> toExchangeRate(importedExchangeRate, currency));
     }
 

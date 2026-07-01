@@ -32,6 +32,6 @@ class ExchangeRateImportJobTest {
     void updateExchangeRatesDailyDelegatesToImporter() {
         exchangeRateImportJob.updateExchangeRatesDaily();
 
-        verify(exchangeRateImporter).updateExchangeRates();
+        verify(exchangeRateImporter).updateExchangeRatesAndCurrencies();
     }
 }

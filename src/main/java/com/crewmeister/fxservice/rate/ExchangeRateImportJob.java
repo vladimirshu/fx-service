@@ -21,6 +21,6 @@ public class ExchangeRateImportJob {
 
     @Scheduled(cron = "0 0 0 * * *")
     public void updateExchangeRatesDaily() {
-        exchangeRateImporter.updateExchangeRates();
+        exchangeRateImporter.updateExchangeRatesAndCurrencies();
     }
 }

@@ -40,9 +40,19 @@ public class BundesbankRestClient {
     }
 
     public List<ImportedExchangeRate> getExchangeRates(String currencyCode) {
+        return getExchangeRates(currencyCode, null, null);
+    }
+
+    public List<ImportedExchangeRate> getExchangeRates(String currencyCode, LocalDate date) {
+        return getExchangeRates(currencyCode, date, date);
+    }
+
+    private List<ImportedExchangeRate> getExchangeRates(String currencyCode, LocalDate startDate, LocalDate endDate) {
         JsonNode response = restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path(EXCHANGE_RATES_DATA_PATH_TEMPLATE.formatted(currencyCode))
+                        .queryParamIfPresent("startPeriod", formatDate(startDate))
+                        .queryParamIfPresent("endPeriod", formatDate(endDate))
                         .queryParam("format", "sdmx_json")
                         .queryParam("detail", "dataonly")
                         .build())
@@ -50,6 +60,12 @@ public class BundesbankRestClient {
                 .body(JsonNode.class);
 
         return parseExchangeRates(currencyCode, response);
+    }
+
+    private java.util.Optional<String> formatDate(LocalDate date) {
+        return date == null
+                ? java.util.Optional.empty()
+                : java.util.Optional.of(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 
     List<ImportedCurrency> parseCurrencies(JsonNode response) {

@@ -64,3 +64,11 @@ for that:
   Substitute hard-coded 'USD' currency in the URL with the all currencies retrieved from the previous get all currencies API call
   Sample API call JSON response with the expected structure is attached.
 - create ImportedExchangeRate java record and use it the same way as for the currency logic.
+
+## Daily update of exchange rates
+Let's implement logic for the daily updates of exchange rates.
+
+For that:
+- update logic of ExchangeRateImporter#updateExchangeRates() method this way:
+  Right after currencies got updated, do update of the exchange rates:
+  for all currencies available, make an API call via the BundesbankRestClient to get exchange rate for yesterday. Save new rates in the database.
