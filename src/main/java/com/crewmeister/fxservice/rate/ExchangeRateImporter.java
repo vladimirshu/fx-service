@@ -33,6 +33,10 @@ public class ExchangeRateImporter {
 
     @Transactional
     public void importExchangeRatesAndCurrencies() {
+        if (hasImportedData()) {
+            return;
+        }
+
         List<ImportedCurrency> importedCurrencies = bundesbankRestClient.getCurrencies();
         importCurrencies(importedCurrencies);
 
@@ -56,6 +60,10 @@ public class ExchangeRateImporter {
                 .toList();
 
         currencyRepository.saveAll(currencies);
+    }
+
+    private boolean hasImportedData() {
+        return currencyRepository.count() > 0 && exchangeRateRepository.count() > 0;
     }
 
     private void importExchangeRates() {

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.crewmeister.fxservice.currency.Currency;
@@ -73,6 +75,18 @@ class ExchangeRateImporterTest {
             );
             return true;
         }));
+    }
+
+    @Test
+    void importExchangeRatesAndCurrenciesSkipsImportWhenCurrenciesAndExchangeRatesAlreadyExist() {
+        when(currencyRepository.count()).thenReturn(1L);
+        when(exchangeRateRepository.count()).thenReturn(1L);
+
+        exchangeRateImporter.importExchangeRatesAndCurrencies();
+
+        verifyNoInteractions(bundesbankRestClient);
+        verify(currencyRepository, never()).saveAll(org.mockito.ArgumentMatchers.any());
+        verify(exchangeRateRepository, never()).saveAll(org.mockito.ArgumentMatchers.any());
     }
 
     @Test
