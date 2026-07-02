@@ -1,4 +1,4 @@
-package com.crewmeister.fxservice.rate;
+package com.crewmeister.fxservice.rate.importer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package com.crewmeister.fxservice.rate;
+package com.crewmeister.fxservice.rate.importer;
 
 public record ImportedCurrency(String code, String name) {
 }

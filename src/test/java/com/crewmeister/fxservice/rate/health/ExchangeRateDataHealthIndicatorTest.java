@@ -1,9 +1,10 @@
-package com.crewmeister.fxservice.rate;
+package com.crewmeister.fxservice.rate.health;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.crewmeister.fxservice.currency.CurrencyRepository;
+import com.crewmeister.fxservice.rate.ExchangeRateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,4 +1,4 @@
-package com.crewmeister.fxservice.rate;
+package com.crewmeister.fxservice.rate.importer;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

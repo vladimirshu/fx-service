@@ -1,7 +1,10 @@
-package com.crewmeister.fxservice.rate;
+package com.crewmeister.fxservice.rate.importer;
 
 import com.crewmeister.fxservice.currency.Currency;
 import com.crewmeister.fxservice.currency.CurrencyRepository;
+import com.crewmeister.fxservice.rate.ExchangeRate;
+import com.crewmeister.fxservice.rate.ExchangeRateRepository;
+import com.crewmeister.fxservice.rate.bundesbank.BundesbankRestClient;
 import jakarta.transaction.Transactional;
 
 import java.time.LocalDate;

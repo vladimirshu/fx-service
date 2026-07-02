@@ -1,4 +1,4 @@
-package com.crewmeister.fxservice.rate;
+package com.crewmeister.fxservice.rate.importer;
 
 import static org.mockito.Mockito.verify;
 import static org.assertj.core.api.Assertions.assertThat;

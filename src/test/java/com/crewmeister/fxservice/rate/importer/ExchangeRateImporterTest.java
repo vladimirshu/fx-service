@@ -1,4 +1,4 @@
-package com.crewmeister.fxservice.rate;
+package com.crewmeister.fxservice.rate.importer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -10,6 +10,9 @@ import static org.mockito.Mockito.when;
 
 import com.crewmeister.fxservice.currency.Currency;
 import com.crewmeister.fxservice.currency.CurrencyRepository;
+import com.crewmeister.fxservice.rate.ExchangeRate;
+import com.crewmeister.fxservice.rate.ExchangeRateRepository;
+import com.crewmeister.fxservice.rate.bundesbank.BundesbankRestClient;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;

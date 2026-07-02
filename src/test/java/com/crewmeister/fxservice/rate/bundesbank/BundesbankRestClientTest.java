@@ -1,7 +1,9 @@
-package com.crewmeister.fxservice.rate;
+package com.crewmeister.fxservice.rate.bundesbank;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.crewmeister.fxservice.rate.importer.ImportedCurrency;
+import com.crewmeister.fxservice.rate.importer.ImportedExchangeRate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

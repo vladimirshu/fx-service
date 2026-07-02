@@ -1,5 +1,7 @@
-package com.crewmeister.fxservice.rate;
+package com.crewmeister.fxservice.rate.bundesbank;
 
+import com.crewmeister.fxservice.rate.importer.ImportedCurrency;
+import com.crewmeister.fxservice.rate.importer.ImportedExchangeRate;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigDecimal;
 import java.net.URI;
