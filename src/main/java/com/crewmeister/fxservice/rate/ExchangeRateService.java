@@ -8,6 +8,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -31,18 +32,21 @@ public class ExchangeRateService {
         this.exchangeRateMapper = exchangeRateMapper;
     }
 
+    @Cacheable(cacheNames = "currencies")
     public List<CurrencyDTO> listCurrencies() {
         return currencyRepository.findAll(Sort.by("code")).stream()
                 .map(currencyMapper::toDto)
                 .toList();
     }
 
+    @Cacheable(cacheNames = "exchangeRates")
     public List<ExchangeRateDTO> listExchangeRates() {
         return exchangeRateRepository.findAllOrderedByCurrencyCodeAndDate().stream()
                 .map(exchangeRateMapper::toDto)
                 .toList();
     }
 
+    @Cacheable(cacheNames = "exchangeRateByCurrencyAndDate", unless = "#result == null")
     public Optional<BigDecimal> getExchangeRate(String currencyCode, LocalDate date) {
         return exchangeRateRepository.findByCurrencyCodeAndDate(currencyCode, date)
                 .map(ExchangeRate::getRate);

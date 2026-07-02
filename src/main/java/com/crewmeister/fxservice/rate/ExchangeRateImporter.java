@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -36,6 +37,10 @@ public class ExchangeRateImporter {
     }
 
     @Transactional
+    @CacheEvict(
+            cacheNames = {"currencies", "exchangeRates", "exchangeRateByCurrencyAndDate"},
+            allEntries = true
+    )
     public void importExchangeRatesAndCurrencies() {
         if (hasImportedData()) {
             LOGGER.info("Initial exchange rate import skipped because data already exists");
@@ -55,6 +60,10 @@ public class ExchangeRateImporter {
     }
 
     @Transactional
+    @CacheEvict(
+            cacheNames = {"currencies", "exchangeRates", "exchangeRateByCurrencyAndDate"},
+            allEntries = true
+    )
     public void updateExchangeRatesAndCurrencies() {
         Map<String, ImportedCurrency> importedCurrenciesByCode = getImportedCurrenciesByCode();
         Set<String> existingCurrencyCodes = getExistingCurrencyCodes();
