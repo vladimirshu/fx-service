@@ -41,8 +41,6 @@ The service is modeled around two main domain concepts:
 
 The intended serving model is to keep exchange rate data locally in H2 and serve API requests from the local persistence layer. This keeps read paths simple and fast, while isolating Bundesbank-specific integration concerns from the HTTP API and domain logic.
 
-The Java packages follow those component boundaries: the core `rate` package contains the API, service, entity, repository, and DTO classes for serving exchange-rate data, while `rate.importer`, `rate.bundesbank`, and `rate.health` isolate import orchestration, external-provider communication, and operational health reporting.
-
 The architecture is documented as a C4 component diagram in [docs/C4-component-diagram.puml](./docs/C4-component-diagram.puml). It can be visualized with PlantUML-compatible tools such as PlantText.
 
 Architecture decision records are kept in [docs/adr](./docs/adr).
