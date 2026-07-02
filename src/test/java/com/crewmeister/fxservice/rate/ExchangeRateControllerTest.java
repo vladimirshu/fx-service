@@ -79,14 +79,23 @@ class ExchangeRateControllerTest {
         mockMvc.perform(get("/api/v1/rate")
                         .param("currency", "USD")
                         .param("date", "2026-06-28"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Exchange rate not found"))
+                .andExpect(jsonPath("$.path").value("/api/v1/rate"));
     }
 
     @Test
     void getExchangeRateRejectsCurrencyWithoutDate() throws Exception {
         mockMvc.perform(get("/api/v1/rate")
                         .param("currency", "USD"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.path").value("/api/v1/rate"));
     }
 
     @Test
@@ -101,7 +110,12 @@ class ExchangeRateControllerTest {
         mockMvc.perform(get("/api/v1/rate")
                         .param("currency", "usd")
                         .param("date", "2026-06-30"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.path").value("/api/v1/rate"));
 
         mockMvc.perform(get("/api/v1/rate")
                         .param("currency", "US")
@@ -134,7 +148,12 @@ class ExchangeRateControllerTest {
                         .param("currency", "USD")
                         .param("date", "2026-06-28")
                         .param("amount", "100"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Exchange rate not found"))
+                .andExpect(jsonPath("$.path").value("/api/v1/convert"));
     }
 
     @Test
@@ -175,7 +194,12 @@ class ExchangeRateControllerTest {
         mockMvc.perform(get("/api/v1/convert")
                         .param("date", "2026-06-30")
                         .param("amount", "100"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Missing required parameter: currency"))
+                .andExpect(jsonPath("$.path").value("/api/v1/convert"));
 
         mockMvc.perform(get("/api/v1/convert")
                         .param("currency", "USD")
@@ -186,6 +210,19 @@ class ExchangeRateControllerTest {
                         .param("currency", "USD")
                         .param("date", "2026-06-30"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getExchangeRateReturnsInternalServerErrorForUnexpectedException() throws Exception {
+        mockMvc.perform(get("/api/v1/rate")
+                        .param("currency", "ERR")
+                        .param("date", "2026-06-30"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
+                .andExpect(jsonPath("$.message").value("Unexpected server error"))
+                .andExpect(jsonPath("$.path").value("/api/v1/rate"));
     }
 
     @TestConfiguration
@@ -206,6 +243,9 @@ class ExchangeRateControllerTest {
 
                 @Override
                 public Optional<BigDecimal> getExchangeRate(String currency, LocalDate date) {
+                    if ("ERR".equals(currency)) {
+                        throw new IllegalStateException("Unexpected test exception");
+                    }
                     if ("USD".equals(currency) && LocalDate.of(2026, 6, 30).equals(date)) {
                         return Optional.of(new BigDecimal("1.095600"));
                     }

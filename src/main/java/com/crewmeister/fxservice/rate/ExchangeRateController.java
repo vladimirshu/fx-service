@@ -1,6 +1,7 @@
 package com.crewmeister.fxservice.rate;
 
 import com.crewmeister.fxservice.currency.CurrencyDTO;
+import com.crewmeister.fxservice.exception.ResourceNotFoundException;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
@@ -41,7 +42,7 @@ public class ExchangeRateController {
             @RequestParam @DateTimeFormat(iso = ISO.DATE) LocalDate date
     ) {
         return exchangeRateService.getExchangeRate(currency, date)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Exchange rate not found"));
     }
 
     @GetMapping("/convert")
@@ -51,7 +52,7 @@ public class ExchangeRateController {
             @RequestParam @Positive BigDecimal amount
     ) {
         return exchangeRateService.convertToEuro(currency, date, amount)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Exchange rate not found"));
     }
 
     @GetMapping(value = "/rate", params = {"currency", "!date"})
