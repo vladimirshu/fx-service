@@ -82,7 +82,7 @@ Response example:
 [
   {
     "currency": "USD",
-    "date": "30-06-2026",
+    "date": "2026-06-30",
     "rate": 0.9563
   }
 ]
@@ -91,7 +91,7 @@ Response example:
 ### Get the exchange rate for a currency on a particular date:
 
 ```http
-GET /api/v1/rate?currency=USD&date=30-06-2026
+GET /api/v1/rate?currency=USD&date=2026-06-30
 ```
 
 Response example:
@@ -103,12 +103,12 @@ Response example:
 Unsupported query combinations:
 
 - `GET /api/v1/rate?currency=USD`
-- `GET /api/v1/rate?date=30-06-2026`
+- `GET /api/v1/rate?date=2026-06-30`
 
 ### Getting converted foreign exchange amount
 
 ```http
-GET /api/v1/convert?currency=USD&date=30-06-2026&amount=100
+GET /api/v1/convert?currency=USD&date=2026-06-30&amount=100
 ```
 
 Response example:
